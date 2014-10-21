@@ -2,119 +2,109 @@
     include "vcs.h"
     include "macro.h"
 
+; -----
+PATTERN         = $80
+TIMETOCHANGE    = 20
+; -----
+
     SEG
     ORG $F000
 
 Reset
+    ; Clear RAM and TIA regs
+    ldx #0
+    lda #0
+Clear
+    sta 0,x
+    inx
+    bne Clear
+
+    ; Once-only init
+    lda #$AA
+    sta PATTERN ; The binary PF 'pattern'
+
+    lda #45
+    sta COLUPF  ; set playfield color
+
+    ldy #0
 
 StartOfFrame
 
     ; Start of vertical blank processing
 
-        lda #0
-        sta VBLANK
+    lda #0
+    sta VBLANK
 
-        lda #2
-        sta VSYNC
+    lda #2
+    sta VSYNC
 
-            ; 3 scanlines of VSYNCH signal
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
+    ; 3 scanlines of VSYNCH signal
+    sta WSYNC
+    sta WSYNC
+    sta WSYNC
 
-        lda #0
-        sta VSYNC
+    lda #0
+    sta VSYNC
 
-            ; 37 scanlines of vertical blank...
+    ; 37 scanlines of vertical blank...
 
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
+    ldx #0
+VerticalBlank
+    sta WSYNC
+    inx
+    cpx #37
+    bne VerticalBlank
 
-            ; 192 scanlines of picture...
+    ; Change pattern every 20 frames
+    iny
+    cpy #TIMETOCHANGE
+    bne notyet
+    ldy #0
 
-            ldx #0
-            REPEAT 192; scanlines
+    lda PATTERN ; Invert pattern
+    eor #$FF
+    sta PATTERN
+notyet
+    lda PATTERN
+    sta PF1
+    eor #$FF
+    sta PF0
+    sta PF2
 
-                inx
-                stx COLUBK
-                sta WSYNC
+    ; 192 scanlines of picture...
 
-            REPEND
+    ldx #0
 
-        lda #%01000010
-        sta VBLANK      ; end of screen - enter blanking
+Picture
+    stx COLUBK
+    sta COLUPF
+    sta WSYNC
+    inx
+    txa
+    eor #$FF
+    sta COLUPF
+    cpx #192
+    bne Picture
 
-            ; 30 scanlines of overscan...
+    lda #%01000010
+    sta VBLANK      ; end of screen - enter blanking
 
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
-            sta WSYNC
+    ; 30 scanlines of overscan...
 
-        jmp StartOfFrame
+    ldx #0
+Overscan
+    sta WSYNC
+    inx
+    cpx #30
+    bne Overscan
+
+    jmp StartOfFrame
+
+; ----
 
         ORG $FFFA
+
+InterruptVectors
 
         .word Reset         ; NMI
         .word Reset         ; RESET
