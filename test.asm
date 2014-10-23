@@ -48,11 +48,10 @@ StartOfFrame
 
     ; 37 scanlines of vertical blank...
 
-    ldx #0
+    ldx #37
 VerticalBlank
     sta WSYNC
-    inx
-    cpx #37
+    dex
     bne VerticalBlank
 
     ; Change pattern every 20 frames
@@ -73,17 +72,14 @@ notyet
 
     ; 192 scanlines of picture...
 
-    ldx #0
-
+    ldx #192
 Picture
     stx COLUBK
-    sta COLUPF
     sta WSYNC
-    inx
     txa
     eor #$FF
     sta COLUPF
-    cpx #192
+    dex
     bne Picture
 
     lda #%01000010
@@ -91,11 +87,10 @@ Picture
 
     ; 30 scanlines of overscan...
 
-    ldx #0
+    ldx #30
 Overscan
     sta WSYNC
-    inx
-    cpx #30
+    dex
     bne Overscan
 
     jmp StartOfFrame
