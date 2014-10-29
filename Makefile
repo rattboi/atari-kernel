@@ -1,8 +1,10 @@
-test.bin: test.asm
-	dasm test.asm -f3 -v5 -Iinclude -otest.bin -ltest.lst -stest.sym
+PROG = test
 
-test: test.bin
-	stella test.bin
+$(PROG).bin: $(PROG).asm
+	dasm $(PROG).asm -f3 -v5 -Iinclude -o$(PROG).bin -l$(PROG).lst -s$(PROG).sym
+
+test: $(PROG).bin
+	stella $(PROG).bin
 
 clean:
-	rm test.bin
+	rm -f $(PROG).bin $(PROG).lst $(PROG).sym
